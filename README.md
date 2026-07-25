@@ -29,14 +29,13 @@ There are two ways to make a package "private but installable as a dependency":
 | **A. npm scoped private package** (`@yourscope/primitives` on registry.npmjs.org, `publishConfig.access: restricted`) | Requires a paid npm **Pro** user or **Teams/Org** plan | `npm install @yourscope/primitives` — consumers just need an `.npmrc` with an npm read token                                                                  |
 | **B. GitHub Packages npm registry**                                                                                   | Free with a private GitHub repo                        | `npm install @yourscope/primitives` — consumers need an `.npmrc` pointing `@yourscope:registry` at `npm.pkg.github.com` + a GitHub token with `read:packages` |
 
-This guide builds for **Option A** and calls out the 2-line diff for Option B wherever it matters (`.npmrc` + `publishConfig.registry` + Actions auth). Everything else is identical.
+This guide builds for **Option A** and calls out the 2-line diff for Option B wherever it matters (`.npmrc` + `publishConfig.registry` + Actions auth). Everything else is identical. If you're going with Option B, steps 1–8 and step 10 below are identical either way — jump to **[Option B: step-by-step](#option-b-step-by-step-github-packages)** after step 10 for the registry-specific steps consolidated in one place.
 
 - [Introduction to GitHub Packages](https://docs.github.com/en/packages/learn-github-packages/introduction-to-github-packages)
 
 ---
 
 ## 1. Repo scaffold
-
 
 > [!NOTE]
 > Consider scaffolding with [tsdx](https://tsdx.io/docs)
@@ -648,6 +647,161 @@ git add . && git commit -m "chore: initial changeset" && git push
 ```
 
 Push to `main` → CI runs → Release workflow opens the "Version Packages" PR → merge it → package publishes to npm automatically.
+
+---
+
+## Option B: step-by-step (GitHub Packages)
+
+Steps 1–8 and step 10 (repo scaffold, dependencies, TypeScript, Vite, Tailwind/shadcn, Storybook, testing, Changesets) are **identical** to Option A — do those first, then come back here for the registry-specific pieces: `package.json`, `.npmrc`, tokens, the release workflow, and consuming the package.
+
+### B.1 Naming constraint (read this first)
+
+GitHub Packages ties every npm package to a GitHub repository, and the package **scope must exactly match your GitHub username or organization name** (case-sensitive). You don't get to pick an arbitrary scope like you can on npmjs.com.
+
+- Repo at `github.com/wozniaka83/primitives` → package must be published as `@wozniaka83/primitives`.
+- Repo owned by an org `github.com/your-org/primitives` → package must be `@your-org/primitives`.
+
+If that doesn't match, `npm publish` fails with a 404/403. Set the name accordingly in step 1:
+
+```bash
+npm pkg set name="@wozniaka83/primitives" version="0.1.0" type="module"
+```
+
+### B.2 `package.json`
+
+Same file as Option A (section 3), except `publishConfig` and `repository` point at GitHub:
+
+```json
+{
+  "publishConfig": {
+    "access": "restricted",
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wozniaka83/primitives.git"
+  }
+}
+```
+
+Everything else in `package.json` (exports, peerDependencies, scripts) stays the same as section 3.
+
+### B.3 `.npmrc`
+
+For local development (publishing or installing from your own machine):
+
+```
+@wozniaka83:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+Never commit a real token — this reads from an env var. Locally: `export GITHUB_TOKEN=...` (bash) or `$env:GITHUB_TOKEN="..."` (PowerShell).
+
+### B.4 Generate a token
+
+Two different tokens are involved, for two different purposes:
+
+1. **Local dev / manual publish** — a classic Personal Access Token:
+   GitHub → Settings → Developer settings → Personal access tokens (classic) → scopes: `read:packages` (to install) and `write:packages` (to publish). Export it as `GITHUB_TOKEN` in your shell.
+2. **CI publish (Actions)** — no PAT needed. The workflow's built-in `secrets.GITHUB_TOKEN` already has `packages:write` for the repo it runs in, as long as the workflow grants it (see B.5). This is the whole appeal of Option B: no secret to create or rotate.
+
+### B.5 GitHub Actions — Release workflow
+
+Same `.github/workflows/release.yml` structure as Option A (section 12), with the registry and auth swapped:
+
+```yaml
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: "https://npm.pkg.github.com"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Create release PR or publish
+        uses: changesets/action@v1
+        with:
+          publish: npm run release
+          version: npm run version-packages
+          title: "chore: version packages"
+          commit: "chore: version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+Differences from Option A: `registry-url` points at `npm.pkg.github.com`, `permissions.packages: write` replaces the npm token, and `NODE_AUTH_TOKEN` reuses the same `secrets.GITHUB_TOKEN` — no `NPM_TOKEN` secret to create.
+
+One-time repo setting: **Settings → Actions → General → Workflow permissions → Read and write permissions**, otherwise the default `GITHUB_TOKEN` can't publish.
+
+### B.6 Consuming the package from another project
+
+The consumer needs an `.npmrc` (not committed with a real value):
+
+```
+@wozniaka83:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+```bash
+npm install @wozniaka83/primitives
+```
+
+```tsx
+import { Button } from "@wozniaka83/primitives";
+import "@wozniaka83/primitives/styles.css";
+```
+
+Two things npm's Option A install doesn't require:
+
+- The token needs `read:packages` scope (a classic PAT — fine-grained tokens don't yet support package reads reliably).
+- Because GitHub Packages inherits your repo's visibility, whoever installs the package must also have at least read access to the **repo itself** (as a collaborator, or via org membership), not just the token.
+
+### B.7 First release checklist (Option B)
+
+```bash
+git remote add origin https://github.com/wozniaka83/primitives.git
+git add .
+git commit -m "chore: scaffold primitives library"
+git push -u origin main
+
+# no npm org/scope to create — the GitHub repo/org is the scope
+
+npx changeset             # describe the initial Button as a minor/patch
+git add . && git commit -m "chore: initial changeset" && git push
+```
+
+Push to `main` → CI runs → Release workflow opens the "Version Packages" PR → merge it → package publishes to `npm.pkg.github.com` automatically, visible under the repo's **Packages** tab.
+
+### Switching to Option A later
+
+Nothing above locks you in. To move to the public npm registry later:
+
+1. `package.json`: change `publishConfig.registry` back to `https://registry.npmjs.org/`.
+2. Add an `NPM_TOKEN` repo secret (npmjs.com → Access Tokens → Automation) and point `release.yml`'s `registry-url` / `NODE_AUTH_TOKEN` at it (section 12).
+3. Update consumers' `.npmrc` to the npm registry line (section 13).
+4. `npm publish` once manually the first time if you want the version history to carry over, since GitHub Packages and npmjs.com are separate registries with separate published-version history.
 
 ---
 
