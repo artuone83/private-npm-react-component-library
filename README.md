@@ -488,6 +488,9 @@ Generate the npm token: npmjs.com → Access Tokens → **Automation** token (by
 
 ## 10. Changesets (versioning)
 
+> [!NOTE]
+> Recommended in [tsdx - publishing](https://tsdx.io/docs/quick-start#publishing)
+
 `.changeset/config.yml` (written by `changeset init`, tweak the default branch):
 
 ```yaml
