@@ -13,7 +13,7 @@ Stack:
 - TypeScript
 - shadcn/ui
 - Vite (library mode)
-- Storybook
+- Storybook (deployed to GitHub Pages)
 - GitHub + GitHub Actions
 - npm (private scope)
 - tailwindcss
@@ -29,7 +29,11 @@ There are two ways to make a package "private but installable as a dependency":
 | **A. npm scoped private package** (`@yourscope/primitives` on registry.npmjs.org, `publishConfig.access: restricted`) | Requires a paid npm **Pro** user or **Teams/Org** plan | `npm install @yourscope/primitives` — consumers just need an `.npmrc` with an npm read token                                                                  |
 | **B. GitHub Packages npm registry**                                                                                   | Free with a private GitHub repo                        | `npm install @yourscope/primitives` — consumers need an `.npmrc` pointing `@yourscope:registry` at `npm.pkg.github.com` + a GitHub token with `read:packages` |
 
-This guide builds for **Option A** and calls out the 2-line diff for Option B wherever it matters (`.npmrc` + `publishConfig.registry` + Actions auth). Everything else is identical. If you're going with Option B, steps 1–8 and step 10 below are identical either way — jump to **[Option B: step-by-step](#option-b-step-by-step-github-packages)** after step 10 for the registry-specific steps consolidated in one place.
+> [!NOTE]
+>
+> This guide is written for **Option A** and highlights the small changes required for **Option B** where relevant (mainly `.npmrc`, `publishConfig.registry`, and GitHub Actions authentication).
+>
+> Everything else is identical. If you choose **Option B**, follow **Steps 1–8** and **Step 10** as written, then continue with the **Option B: Step-by-Step** section for all registry-specific configuration in one place.
 
 - [Introduction to GitHub Packages](https://docs.github.com/en/packages/learn-github-packages/introduction-to-github-packages)
 
@@ -435,7 +439,60 @@ export const Outline: Story = {
 };
 ```
 
-Run locally with `npm run dev`. This is also what CI will build as a static site (optional: publish to GitHub Pages or Chromatic for team-visible docs).
+Run locally with `npm run dev`. This is also what CI will build as a static site — see below for publishing it so nobody has to clone the repo just to browse components.
+
+### Publish Storybook to GitHub Pages
+
+`npm run build-storybook` already produces a static site (`storybook-static/`). Deploying that to GitHub Pages means anyone on the team can browse components, props, and code examples straight from a URL — no local clone, no `npm install`, no `npm run dev`.
+
+One-time repo setup: **Settings → Pages → Source: GitHub Actions**.
+
+**`.github/workflows/storybook.yml`**
+
+```yaml
+name: Deploy Storybook to Pages
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build-storybook
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: storybook-static
+      - uses: actions/deploy-pages@v4
+        id: deployment
+```
+
+This is deliberately a separate workflow from `ci.yml` and `release.yml` — it only needs to build and ship a static site, and keeping it decoupled means a Storybook deploy never blocks (or gets blocked by) the changesets/publish flow.
+
+Notes:
+
+- This is a **project page** (`https://<owner>.github.io/<repo>/`), so assets are served from a subpath. Storybook's Vite builder emits relative asset paths by default, so this works out of the box — no `base` config needed in `.storybook/main.ts`.
+- If the repo is private, GitHub Pages for private repos requires **GitHub Pro/Team/Enterprise** (same tier gate as Option A's private npm scope) — public repos get Pages for free regardless of plan. If that's a blocker, Chromatic's free tier is a private-repo-friendly alternative for hosted Storybook docs.
+- Runs on every push to `main`, so the deployed docs always reflect what's merged — not just tagged releases.
 
 ---
 
@@ -807,6 +864,8 @@ Nothing above locks you in. To move to the public npm registry later:
 | `vite-plugin-lib-inject-css`        | Extracts all Tailwind/shadcn CSS into one shippable `dist/style.css`                      |
 | shadcn CLI                          | Scaffolds accessible Radix-based primitives into your source, which you own and customize |
 | Storybook                           | Local dev/preview + living documentation for your team                                    |
+| Storybook on GitHub Pages           | Browsable component docs/examples with no local clone or install required                |
 | Changesets                          | Semver bumps, CHANGELOG generation, coordinated publish                                   |
 | GitHub Actions (CI)                 | Lint/typecheck/test/build on every PR                                                     |
 | GitHub Actions (Release)            | Automates the version-PR → merge → `npm publish` cycle                                    |
+| GitHub Actions (Pages deploy)       | Rebuilds and redeploys the Storybook site on every push to `main`                          |
