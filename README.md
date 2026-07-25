@@ -178,6 +178,9 @@ Key points:
 
 ## 4. TypeScript config
 
+> [!NOTE]
+> Can be done with [tsdx](https://tsdx.io/docs)
+
 **`tsconfig.json`** (editor/dev config, includes Storybook/tests):
 
 ```json
