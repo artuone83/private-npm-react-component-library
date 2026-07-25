@@ -29,13 +29,17 @@ There are two ways to make a package "private but installable as a dependency":
 | **A. npm scoped private package** (`@yourscope/primitives` on registry.npmjs.org, `publishConfig.access: restricted`) | Requires a paid npm **Pro** user or **Teams/Org** plan | `npm install @yourscope/primitives` — consumers just need an `.npmrc` with an npm read token                                                                  |
 | **B. GitHub Packages npm registry**                                                                                   | Free with a private GitHub repo                        | `npm install @yourscope/primitives` — consumers need an `.npmrc` pointing `@yourscope:registry` at `npm.pkg.github.com` + a GitHub token with `read:packages` |
 
-This guide builds for **Option A** (since you said "register on npm") and calls out the 2-line diff for Option B wherever it matters (`.npmrc` + `publishConfig.registry` + Actions auth). Everything else is identical.
+This guide builds for **Option A** and calls out the 2-line diff for Option B wherever it matters (`.npmrc` + `publishConfig.registry` + Actions auth). Everything else is identical.
 
 - [Introduction to GitHub Packages](https://docs.github.com/en/packages/learn-github-packages/introduction-to-github-packages)
 
 ---
 
 ## 1. Repo scaffold
+
+
+> [!NOTE]
+> Consider scaffolding with [tsdx](https://tsdx.io/docs)
 
 ```bash
 mkdir primitives && cd primitives
