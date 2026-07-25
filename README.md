@@ -38,7 +38,7 @@ This guide builds for **Option A** and calls out the 2-line diff for Option B wh
 ## 1. Repo scaffold
 
 > [!NOTE]
-> Consider scaffolding with [tsdx](https://tsdx.io/docs)
+> **Why not [tsdx](https://tsdx.io/docs)?** tsdx was a popular zero-config scaffold for TS component libraries, but it's been unmaintained since ~2021 (old Rollup/TS versions, no real path to Tailwind CSS extraction or shadcn-style setup). It also scaffolds its own Rollup build pipeline, which would conflict with the Vite library-mode config this guide builds in step 5. Scaffold manually and use Vite alone — it's actively maintained and everything below (Tailwind, Storybook, CSS extraction) is built around it directly.
 
 ```bash
 mkdir primitives && cd primitives
@@ -176,9 +176,6 @@ Key points:
 ---
 
 ## 4. TypeScript config
-
-> [!NOTE]
-> Can be done with [tsdx](https://tsdx.io/docs)
 
 **`tsconfig.json`** (editor/dev config, includes Storybook/tests):
 
@@ -486,9 +483,6 @@ Generate the npm token: npmjs.com → Access Tokens → **Automation** token (by
 ---
 
 ## 10. Changesets (versioning)
-
-> [!NOTE]
-> Recommended in [tsdx - publishing](https://tsdx.io/docs/quick-start#publishing)
 
 `.changeset/config.yml` (written by `changeset init`, tweak the default branch):
 
