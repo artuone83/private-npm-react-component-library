@@ -222,7 +222,7 @@ Key points:
 
 ---
 
-## 5. Vite library-mode config
+## 5. Vite [library-mode](https://vite.dev/guide/build#library-mode) config
 
 **`vite.config.ts`**
 
