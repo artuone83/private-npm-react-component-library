@@ -1,5 +1,34 @@
 # Building a Private React Components Library
 
+Table of Contents
+
+- [0. Decide on the registry first](#0-decide-on-the-registry-first)
+- [1. Repo scaffold](#1-repo-scaffold)
+- [2. Install dependencies](#2-install-dependencies)
+- [3. `package.json`](#3-packagejson)
+- [4. TypeScript config](#4-typescript-config)
+- [5. Vite library-mode config](#5-vite-library-mode-config)
+- [6. Tailwind + shadcn/ui foundation](#6-tailwind--shadcnui-foundation)
+- [7. Storybook](#7-storybook)
+  - [Publish Storybook to GitHub Pages](#publish-storybook-to-github-pages)
+- [8. Testing (optional but recommended)](#8-testing-optional-but-recommended)
+- [9. `.npmrc`](#9-npmrc)
+- [10. Changesets (versioning)](#10-changesets-versioning)
+- [11. GitHub Actions — CI](#11-github-actions--ci)
+- [12. GitHub Actions — Release / Publish](#12-github-actions--release--publish)
+- [13. Consuming the package from another project](#13-consuming-the-package-from-another-project)
+- [14. First release checklist](#14-first-release-checklist)
+- [Option B: step-by-step (GitHub Packages)](#option-b-step-by-step-github-packages)
+  - [B.1 Naming constraint (read this first)](#b1-naming-constraint-read-this-first)
+  - [B.2 `package.json`](#b2-packagejson)
+  - [B.3 `.npmrc`](#b3-npmrc)
+  - [B.4 Generate a token](#b4-generate-a-token)
+  - [B.5 GitHub Actions — Release workflow](#b5-github-actions--release-workflow)
+  - [B.6 Consuming the package from another project](#b6-consuming-the-package-from-another-project)
+  - [B.7 First release checklist (Option B)](#b7-first-release-checklist-option-b)
+  - [Switching to Option A later](#switching-to-option-a-later)
+- [Summary of what each piece is for](#summary-of-what-each-piece-is-for)
+
 > [!NOTE]
 > Web guides
 >
@@ -60,7 +89,8 @@ components/
 ├── .changeset/
 ├── .github/workflows/
 │   ├── ci.yml
-│   └── release.yml
+│   ├── release.yml
+│   └── storybook.yml
 ├── .storybook/
 ├── src/
 │   ├── components/
@@ -70,7 +100,7 @@ components/
 │   │       ├── Button.test.tsx
 │   │       └── index.ts
 │   ├── lib/
-│   │   └── utils.ts
+│   │   └── utilities.ts
 │   ├── styles/
 │   │   └── globals.css
 │   └── index.ts
