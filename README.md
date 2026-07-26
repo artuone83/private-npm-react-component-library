@@ -43,6 +43,8 @@ There are two ways to make a package "private but installable as a dependency":
 
 > [!NOTE]
 > **Why not [tsdx](https://tsdx.io/docs)?** tsdx was a popular zero-config scaffold for TS component libraries, but it's been unmaintained since ~2021 (old Rollup/TS versions, no real path to Tailwind CSS extraction or shadcn-style setup). It also scaffolds its own Rollup build pipeline, which would conflict with the Vite library-mode config this guide builds in step 5. Scaffold manually and use Vite alone — it's actively maintained and everything below (Tailwind, Storybook, CSS extraction) is built around it directly.
+>
+> **Why not `npm create vite@latest -- --template react-ts`?** That template scaffolds a deployable *app* (`index.html`, `public/`, `src/main.tsx` DOM bootstrap, `src/App.tsx`), not a library — none of which a component package ships. `vite.config.ts` would still need to be rewritten from scratch for library mode (`build.lib`, `rollupOptions.external`, the `dts` plugin, see step 5), so the template mostly just adds app-specific files you'd delete. Starting from `npm init -y` produces the exact folder structure below with nothing to strip out.
 
 ```bash
 mkdir primitives && cd primitives
@@ -703,7 +705,7 @@ Push to `main` → CI runs → Release workflow opens the "Version Packages" PR 
 
 ## Option B: step-by-step (GitHub Packages)
 
-Steps 1–8 and step 10 (repo scaffold, dependencies, TypeScript, Vite, Tailwind/shadcn, Storybook, testing, Changesets) are **identical** to Option A — do those first, then come back here for the registry-specific pieces: `package.json`, `.npmrc`, tokens, the release workflow, and consuming the package.
+Steps 1–8 (go to step [Go to Repo scaffold](#1-repo-scaffold)) and step 10 (repo scaffold, dependencies, TypeScript, Vite, Tailwind/shadcn, Storybook, testing, Changesets) are **identical** to Option A — do those first, then come back here for the registry-specific pieces: `package.json`, `.npmrc`, tokens, the release workflow, and consuming the package.
 
 ### B.1 Naming constraint (read this first)
 
@@ -864,8 +866,8 @@ Nothing above locks you in. To move to the public npm registry later:
 | `vite-plugin-lib-inject-css`        | Extracts all Tailwind/shadcn CSS into one shippable `dist/style.css`                      |
 | shadcn CLI                          | Scaffolds accessible Radix-based primitives into your source, which you own and customize |
 | Storybook                           | Local dev/preview + living documentation for your team                                    |
-| Storybook on GitHub Pages           | Browsable component docs/examples with no local clone or install required                |
+| Storybook on GitHub Pages           | Browsable component docs/examples with no local clone or install required                 |
 | Changesets                          | Semver bumps, CHANGELOG generation, coordinated publish                                   |
 | GitHub Actions (CI)                 | Lint/typecheck/test/build on every PR                                                     |
 | GitHub Actions (Release)            | Automates the version-PR → merge → `npm publish` cycle                                    |
-| GitHub Actions (Pages deploy)       | Rebuilds and redeploys the Storybook site on every push to `main`                          |
+| GitHub Actions (Pages deploy)       | Rebuilds and redeploys the Storybook site on every push to `main`                         |
