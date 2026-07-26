@@ -741,13 +741,13 @@ Steps 1–8 (go to step [Go to Repo scaffold](#1-repo-scaffold)) and step 10 (re
 
 GitHub Packages ties every npm package to a GitHub repository, and the package **scope must exactly match your GitHub username or organization name** (case-sensitive). You don't get to pick an arbitrary scope like you can on npmjs.com.
 
-- Repo at `github.com/wozniaka83/components` → package must be published as `@wozniaka83/components`.
+- Repo at `github.com/${user-name/organization-name}/components` → package must be published as `@${user-name/organization-name}/components`.
 - Repo owned by an org `github.com/your-org/components` → package must be `@your-org/components`.
 
 If that doesn't match, `npm publish` fails with a 404/403. Set the name accordingly in step 1:
 
 ```bash
-npm pkg set name="@wozniaka83/components" version="0.1.0" type="module"
+npm pkg set name="@${user-name/organization-name}/components" version="0.1.0" type="module"
 ```
 
 ### B.2 `package.json`
@@ -762,7 +762,7 @@ Same file as Option A (section 3), except `publishConfig` and `repository` point
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wozniaka83/components.git"
+    "url": "git+https://github.com/${user-name/organization-name}/components.git"
   }
 }
 ```
@@ -774,7 +774,7 @@ Everything else in `package.json` (exports, peerDependencies, scripts) stays the
 For local development (publishing or installing from your own machine):
 
 ```
-@wozniaka83:registry=https://npm.pkg.github.com
+@${user-name/organization-name}:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
@@ -843,17 +843,17 @@ One-time repo setting: **Settings → Actions → General → Workflow permissio
 The consumer needs an `.npmrc` (not committed with a real value):
 
 ```
-@wozniaka83:registry=https://npm.pkg.github.com
+@${user-name/organization-name}:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
 ```bash
-npm install @wozniaka83/components
+npm install @${user-name/organization-name}/components
 ```
 
 ```tsx
-import { Button } from "@wozniaka83/components";
-import "@wozniaka83/components/styles.css";
+import { Button } from "@${user-name/organization-name}/components";
+import "@${user-name/organization-name}/components/styles.css";
 ```
 
 Two things npm's Option A install doesn't require:
@@ -864,7 +864,7 @@ Two things npm's Option A install doesn't require:
 ### B.7 First release checklist (Option B)
 
 ```bash
-git remote add origin https://github.com/wozniaka83/components.git
+git remote add origin https://github.com/${user-name/organization-name}/components.git
 git add .
 git commit -m "chore: scaffold components library"
 git push -u origin main
