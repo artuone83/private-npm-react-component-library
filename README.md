@@ -26,8 +26,8 @@ There are two ways to make a package "private but installable as a dependency":
 
 | Option                                                                                                                | Cost                                                   | Install experience                                                                                                                                            |
 | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A. npm scoped private package** (`@yourscope/primitives` on registry.npmjs.org, `publishConfig.access: restricted`) | Requires a paid npm **Pro** user or **Teams/Org** plan | `npm install @yourscope/primitives` — consumers just need an `.npmrc` with an npm read token                                                                  |
-| **B. GitHub Packages npm registry**                                                                                   | Free with a private GitHub repo                        | `npm install @yourscope/primitives` — consumers need an `.npmrc` pointing `@yourscope:registry` at `npm.pkg.github.com` + a GitHub token with `read:packages` |
+| **A. npm scoped private package** (`@yourscope/components` on registry.npmjs.org, `publishConfig.access: restricted`) | Requires a paid npm **Pro** user or **Teams/Org** plan | `npm install @yourscope/components` — consumers just need an `.npmrc` with an npm read token                                                                  |
+| **B. GitHub Packages npm registry**                                                                                   | Free with a private GitHub repo                        | `npm install @yourscope/components` — consumers need an `.npmrc` pointing `@yourscope:registry` at `npm.pkg.github.com` + a GitHub token with `read:packages` |
 
 > [!NOTE]
 >
@@ -44,19 +44,19 @@ There are two ways to make a package "private but installable as a dependency":
 > [!NOTE]
 > **Why not [tsdx](https://tsdx.io/docs)?** tsdx was a popular zero-config scaffold for TS component libraries, but it's been unmaintained since ~2021 (old Rollup/TS versions, no real path to Tailwind CSS extraction or shadcn-style setup). It also scaffolds its own Rollup build pipeline, which would conflict with the Vite library-mode config this guide builds in step 5. Scaffold manually and use Vite alone — it's actively maintained and everything below (Tailwind, Storybook, CSS extraction) is built around it directly.
 >
-> **Why not `npm create vite@latest -- --template react-ts`?** That template scaffolds a deployable *app* (`index.html`, `public/`, `src/main.tsx` DOM bootstrap, `src/App.tsx`), not a library — none of which a component package ships. `vite.config.ts` would still need to be rewritten from scratch for library mode (`build.lib`, `rollupOptions.external`, the `dts` plugin, see step 5), so the template mostly just adds app-specific files you'd delete. Starting from `npm init -y` produces the exact folder structure below with nothing to strip out.
+> **Why not `npm create vite@latest -- --template react-ts`?** That template scaffolds a deployable _app_ (`index.html`, `public/`, `src/main.tsx` DOM bootstrap, `src/App.tsx`), not a library — none of which a component package ships. `vite.config.ts` would still need to be rewritten from scratch for library mode (`build.lib`, `rollupOptions.external`, the `dts` plugin, see step 5), so the template mostly just adds app-specific files you'd delete. Starting from `npm init -y` produces the exact folder structure below with nothing to strip out.
 
 ```bash
-mkdir primitives && cd primitives
+mkdir components && cd components
 git init
 npm init -y
-npm pkg set name="@yourscope/primitives" version="0.1.0" type="module"
+npm pkg set name="@yourscope/components" version="0.1.0" type="module"
 ```
 
 Folder structure you're building toward:
 
 ```bash
-primitives/
+components/
 ├── .changeset/
 ├── .github/workflows/
 │   ├── ci.yml
@@ -101,7 +101,7 @@ npm install -D vite @vitejs/plugin-react vite-plugin-dts vite-plugin-lib-inject-
 npm install class-variance-authority clsx tailwind-merge
 npm install -D tailwindcss postcss autoprefixer tailwindcss-animate
 
-# Radix primitives (shadcn wraps these — add per-component as needed)
+# Radix components (shadcn wraps these — add per-component as needed)
 npm install @radix-ui/react-slot
 
 # Storybook
@@ -126,7 +126,7 @@ npx changeset init
 
 ```json
 {
-  "name": "@yourscope/primitives",
+  "name": "@yourscope/components",
   "version": "0.1.0",
   "description": "UI components for [Team] projects — React, TypeScript, shadcn/ui.",
   "license": "UNLICENSED",
@@ -151,7 +151,7 @@ npx changeset init
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourorg/primitives.git"
+    "url": "git+https://github.com/yourorg/components.git"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
@@ -175,7 +175,7 @@ npx changeset init
 Key points:
 
 - `sideEffects` scoped to CSS so bundlers can still tree-shake your JS.
-- `exports["./styles.css"]` is how consumers pull in the compiled Tailwind output: `import "@yourscope/primitives/styles.css"`.
+- `exports["./styles.css"]` is how consumers pull in the compiled Tailwind output: `import "@yourscope/components/styles.css"`.
 - `access: restricted` is what makes a **scoped** package private on npm (default for scopes is actually already restricted, but be explicit).
 - **Option B (GitHub Packages) diff:** change `publishConfig.registry` to `"https://npm.pkg.github.com"`.
 
@@ -319,7 +319,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 ```
 
-Add shadcn components via its CLI — it scaffolds source files into `src/components/ui`, which you then re-export as your own primitives:
+Add shadcn components via its CLI — it scaffolds source files into `src/components/ui`, which you then re-export as your own components:
 
 ```bash
 npx shadcn@latest add button
@@ -384,7 +384,7 @@ export * from "./Button";
 import "./styles/globals.css";
 
 export * from "./components/Button";
-// export * from "./components/..." as you add primitives
+// export * from "./components/..." as you add components
 ```
 
 ---
@@ -665,12 +665,12 @@ How this behaves:
 Then:
 
 ```bash
-npm install @yourscope/primitives
+npm install @yourscope/components
 ```
 
 ```tsx
-import { Button } from "@yourscope/primitives";
-import "@yourscope/primitives/styles.css";
+import { Button } from "@yourscope/components";
+import "@yourscope/components/styles.css";
 ```
 
 **Option B consumers** need:
@@ -687,9 +687,9 @@ import "@yourscope/primitives/styles.css";
 ## 14. First release checklist
 
 ```bash
-git remote add origin https://github.com/yourorg/primitives.git
+git remote add origin https://github.com/yourorg/components.git
 git add .
-git commit -m "chore: scaffold primitives library"
+git commit -m "chore: scaffold components library"
 git push -u origin main
 
 # create your first npm scope/org if you haven't:
@@ -711,13 +711,13 @@ Steps 1–8 (go to step [Go to Repo scaffold](#1-repo-scaffold)) and step 10 (re
 
 GitHub Packages ties every npm package to a GitHub repository, and the package **scope must exactly match your GitHub username or organization name** (case-sensitive). You don't get to pick an arbitrary scope like you can on npmjs.com.
 
-- Repo at `github.com/wozniaka83/primitives` → package must be published as `@wozniaka83/primitives`.
-- Repo owned by an org `github.com/your-org/primitives` → package must be `@your-org/primitives`.
+- Repo at `github.com/wozniaka83/components` → package must be published as `@wozniaka83/components`.
+- Repo owned by an org `github.com/your-org/components` → package must be `@your-org/components`.
 
 If that doesn't match, `npm publish` fails with a 404/403. Set the name accordingly in step 1:
 
 ```bash
-npm pkg set name="@wozniaka83/primitives" version="0.1.0" type="module"
+npm pkg set name="@wozniaka83/components" version="0.1.0" type="module"
 ```
 
 ### B.2 `package.json`
@@ -732,7 +732,7 @@ Same file as Option A (section 3), except `publishConfig` and `repository` point
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wozniaka83/primitives.git"
+    "url": "git+https://github.com/wozniaka83/components.git"
   }
 }
 ```
@@ -818,12 +818,12 @@ The consumer needs an `.npmrc` (not committed with a real value):
 ```
 
 ```bash
-npm install @wozniaka83/primitives
+npm install @wozniaka83/components
 ```
 
 ```tsx
-import { Button } from "@wozniaka83/primitives";
-import "@wozniaka83/primitives/styles.css";
+import { Button } from "@wozniaka83/components";
+import "@wozniaka83/components/styles.css";
 ```
 
 Two things npm's Option A install doesn't require:
@@ -834,9 +834,9 @@ Two things npm's Option A install doesn't require:
 ### B.7 First release checklist (Option B)
 
 ```bash
-git remote add origin https://github.com/wozniaka83/primitives.git
+git remote add origin https://github.com/wozniaka83/components.git
 git add .
-git commit -m "chore: scaffold primitives library"
+git commit -m "chore: scaffold components library"
 git push -u origin main
 
 # no npm org/scope to create — the GitHub repo/org is the scope
@@ -864,7 +864,7 @@ Nothing above locks you in. To move to the public npm registry later:
 | ----------------------------------- | ----------------------------------------------------------------------------------------- |
 | Vite (lib mode) + `vite-plugin-dts` | Bundles `src/` into ESM+CJS with generated `.d.ts` types                                  |
 | `vite-plugin-lib-inject-css`        | Extracts all Tailwind/shadcn CSS into one shippable `dist/style.css`                      |
-| shadcn CLI                          | Scaffolds accessible Radix-based primitives into your source, which you own and customize |
+| shadcn CLI                          | Scaffolds accessible Radix-based components into your source, which you own and customize |
 | Storybook                           | Local dev/preview + living documentation for your team                                    |
 | Storybook on GitHub Pages           | Browsable component docs/examples with no local clone or install required                 |
 | Changesets                          | Semver bumps, CHANGELOG generation, coordinated publish                                   |
